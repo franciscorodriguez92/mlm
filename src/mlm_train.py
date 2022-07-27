@@ -15,7 +15,7 @@ LR_WARMUP_STEPS = 10000
 WEIGHT_DECAY = 0.01
 SEED_TRAIN = 0
 data_path_save = "data/processed"
-language = False
+language = "legacy"
 MODEL = "nreimers/mMiniLMv2-L12-H384-distilled-from-XLMR-Large"
 MODEL_tokenizer = "xlm-roberta-base"
 model_path_save = "models/mlm/xmlr_mlm/"
@@ -40,6 +40,9 @@ if not language:
         "train": datasets.concatenate_datasets(
         [train_en['train'], train_es['train']])
     })
+elif language=="legacy":
+    data_path_save=os.path.join("../",data_path_save)
+    train_dataset = datasets.load_from_disk(data_path_save)
 else:
     data_path_save=os.path.join("../",data_path_save, language)
     train_dataset = datasets.load_from_disk(data_path_save)
