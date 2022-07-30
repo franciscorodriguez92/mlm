@@ -4,19 +4,32 @@ from pathlib import Path
 import datasets
 from transformers import AutoTokenizer, DataCollatorForLanguageModeling
 import multiprocessing
-
+import json
 #%% inputs
+""" disable_caching_dataset = True
 sample = 100
 MAX_SEQ_LEN = 128
 MODEL = "xlm-roberta-base"
-data_path = "../data/metwo-unlabeled-data/corpus/"
-disable_caching_dataset = True
-data_path_save = "data/processed"
 language = 'en'
-data_path_save=os.path.join("../",data_path_save, language)
-Path(data_path_save).mkdir(parents=True, exist_ok=True) 
 mlm_probability = 0.15
+data_path = "../data/metwo-unlabeled-data/corpus/"
+data_path_save = "data/processed"
+data_path_save=os.path.join("../",data_path_save, language) """
 
+#%%
+config_file = open('config.json')
+config = json.load(config_file)
+
+#%% inputs
+disable_caching_dataset = True
+sample = config["preprocessing"]["sample"]
+MAX_SEQ_LEN = config["preprocessing"]["max_seq_len"]
+MODEL = config["preprocessing"]["tokenizer"]
+language = config["preprocessing"]["language"]
+mlm_probability = config["preprocessing"]["mlm_probability"]
+data_path = config["preprocessing"]["data_path"]
+data_path_save = config["preprocessing"]["data_processing_save"]
+Path(data_path_save).mkdir(parents=True, exist_ok=True) 
 
 #%% 
 print("-------------- MLM Preprocessing INPUTS: --------------")

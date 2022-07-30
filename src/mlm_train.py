@@ -3,26 +3,50 @@ import os
 import datasets
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 from transformers import TrainingArguments, Trainer
+import json
+from pathlib import Path
 #%%
 import torch, gc
 torch.cuda.empty_cache()
 gc.collect()
 #%% inputs
-sample = 10
+""" sample = 10
 TRAIN_BATCH_SIZE = 128
 LEARNING_RATE = 5e-4 
 LR_WARMUP_STEPS = 10000
 WEIGHT_DECAY = 0.01
 SEED_TRAIN = 0
 data_path_save = "data/processed"
-language = "legacy"
+language = None
 MODEL = "nreimers/mMiniLMv2-L12-H384-distilled-from-XLMR-Large"
 MODEL_tokenizer = "xlm-roberta-base"
 model_path_save = "models/mlm/xmlr_mlm/"
 model_path_save = os.path.join("../",model_path_save)
 model_checkpoint = "model_checkpoints/xlm-r-sexism"
 model_checkpoint=os.path.join("../",model_checkpoint)
-EPOCHS = 1
+EPOCHS = 2 """
+
+#%%
+config_file = open('config.json')
+config = json.load(config_file)
+
+#%% inputs
+SEED_TRAIN = 0
+sample = config["mlm_training"]["sample"]
+data_path_save = config["preprocessing"]["data_processing_save"]
+language = config["mlm_training"]["language"]
+model_path_save = config["mlm_training"]["MODEL_PATH_SAVE"]
+model_checkpoint = config["mlm_training"]["MODEL_CHECKPOINT"]
+TRAIN_BATCH_SIZE = config["mlm_training"]["TRAIN_BATCH_SIZE"]
+LEARNING_RATE = config["mlm_training"]["LEARNING_RATE"]
+LR_WARMUP_STEPS = config["mlm_training"]["LR_WARMUP_STEPS"]
+WEIGHT_DECAY = config["mlm_training"]["WEIGHT_DECAY"]
+EPOCHS = config["mlm_training"]["EPOCHS"]
+MODEL = config["mlm_training"]["MODEL"]
+MODEL_tokenizer = config["preprocessing"]["tokenizer"]
+Path(model_path_save).mkdir(parents=True, exist_ok=True) 
+Path(model_checkpoint).mkdir(parents=True, exist_ok=True) 
+
 #%% 
 print("-------------- MLM Preprocessing INPUTS: --------------")
 print("Data training path: " , data_path_save)
@@ -33,18 +57,17 @@ print("Sample raw data: ", sample)
 #%%
 print("Loading data...")
 if not language:
-    data_path_save = "data/processed"
-    train_en = datasets.load_from_disk(os.path.join("../",data_path_save, 'en'))
-    train_es = datasets.load_from_disk(os.path.join("../",data_path_save, 'es'))
+    data_path_save = config["preprocessing"]["data_processing_save"]
+    train_en = datasets.load_from_disk(os.path.join(data_path_save, 'en'))
+    train_es = datasets.load_from_disk(os.path.join(data_path_save, 'es'))
     train_dataset = datasets.DatasetDict({ 
         "train": datasets.concatenate_datasets(
         [train_en['train'], train_es['train']])
     })
 elif language=="legacy":
-    data_path_save=os.path.join("../",data_path_save)
     train_dataset = datasets.load_from_disk(data_path_save)
 else:
-    data_path_save=os.path.join("../",data_path_save, language)
+    data_path_save=os.path.join(data_path_save, language)
     train_dataset = datasets.load_from_disk(data_path_save)
 
 #%%
@@ -74,6 +97,7 @@ training_args = TrainingArguments(
     metric_for_best_model='loss', 
     seed=SEED_TRAIN,
     remove_unused_columns=False,
+    disable_tqdm = True,
 )
 
 trainer = Trainer(

@@ -3,7 +3,7 @@ mkdir domain_adaption
 python3 -m venv env_data_processing
 source env_data_processing/bin/activate
 #pip3 install -r requirements.txt
-python3 -m pip install numpy pandas torch transformers datasets unidecode
+python3 -m pip install numpy pandas torch transformers datasets unidecode sklearn
 sudo mkdir data
 cd data
 aws s3 cp s3://metwo-unlabeled-data/corpus/ . --recursive
@@ -47,6 +47,33 @@ python3 mlm_train.py
 aws s3 cp ../models/mlm/ s3://data-classification-system/models/mlm/ --recursive
 aws s3 cp experiment.log s3://data-classification-system/logs/
 #sudo shutdown -h now
+
+#####################################################
+#####################################################
+# EXPERIMENTS MLM Training:::
+#!/bin/bash
+#chmod 777 ./experiments_v2.sh
+#nohup ./experiments_v2.sh &> experiment_mlm.log &
+source ~/domain_adaptation/env_mlm_training/bin/activate
+echo "Running MLM training..."
+python3 mlm_train.py
+aws s3 cp ../models/mlm/ s3://data-classification-system/models/mlm/ --recursive
+aws s3 cp experiment_mlm.log s3://data-classification-system/logs/
+sudo shutdown -h now
+
+#####################################################
+#####################################################
+# EXPERIMENTS Fine-tuning:::
+#!/bin/bash
+#chmod 777 ./experiments_fine_tuning.sh
+#nohup ./experiments_fine_tuning.sh &> experiments_fine_tuning.log &
+source ~/domain_adaptation/env_mlm_training/bin/activate
+echo "Running fine tuning..."
+python3 fine_tuning.py
+aws s3 cp ../models/fine-tuned/ s3://data-classification-system/models/fine-tuned/ --recursive
+aws s3 cp experiments_fine_tuning.log s3://data-classification-system/logs/
+python3 generate_submissions.py
+sudo shutdown -h now
 
 #####################################################
 #####################################################
