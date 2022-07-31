@@ -9,6 +9,8 @@ from pathlib import Path
 import torch, gc
 torch.cuda.empty_cache()
 gc.collect()
+#import os
+#os.environ["NCCL_DEBUG"] = "INFO"
 #%% inputs
 """ sample = 10
 TRAIN_BATCH_SIZE = 128
@@ -97,8 +99,10 @@ training_args = TrainingArguments(
     metric_for_best_model='loss', 
     seed=SEED_TRAIN,
     remove_unused_columns=False,
-    disable_tqdm = True,
-)
+    disable_tqdm = False,
+    fp16=True,
+    logging_steps=len(train_dataset["train"]) // TRAIN_BATCH_SIZE,
+    )
 
 trainer = Trainer(
     model=model,

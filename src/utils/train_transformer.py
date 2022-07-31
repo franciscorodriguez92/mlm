@@ -7,6 +7,7 @@ import numpy as np
 
 
 def train_one_epoch(model, dataloader, optimizer, device, scheduler, task):
+    model = model.to(device)
     model.train()
     tr_loss = 0
     nb_tr_steps = 0
