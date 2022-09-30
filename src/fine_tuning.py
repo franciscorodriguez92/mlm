@@ -59,7 +59,11 @@ validation_loader = DataLoader(
     batch_size=TRAIN_BATCH_SIZE, shuffle=True)
 
 #%%
-model = AutoModelForSequenceClassification.from_pretrained(model_mlm)
+if task==1:
+    model = AutoModelForSequenceClassification.from_pretrained(model_mlm)
+else:
+    model = AutoModelForSequenceClassification.from_pretrained(model_mlm, num_labels=6)
+
 #%%
 optimizer = AdamW(model.parameters(), lr=LEARNING_RATE)
 num_training_steps = epochs * len(train_loader)
