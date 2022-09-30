@@ -99,8 +99,8 @@ gold_standard = pd.read_table(test_path_labeled, sep="\t", dtype=str)
 gold_standard_merge = gold_standard.merge(df_pred)
 # %%
 if task==1:
-    print(classification_report(gold_standard_merge['task1'], gold_standard_merge['category']))
+    print(classification_report(gold_standard_merge['task1'], gold_standard_merge['category'], digits=4))
 else:
-    print(classification_report(gold_standard_merge['task2'], gold_standard_merge['category']))
+    print(classification_report(gold_standard_merge['task2'], gold_standard_merge['category'], digits=4))
 
 # %%
