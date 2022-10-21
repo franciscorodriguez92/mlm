@@ -29,7 +29,7 @@ language = config["preprocessing"]["language"]
 mlm_probability = config["preprocessing"]["mlm_probability"]
 data_path = config["preprocessing"]["data_path"]
 data_path_save = config["preprocessing"]["data_processing_save"]
-Path(data_path_save).mkdir(parents=True, exist_ok=True) 
+
 
 #%% 
 print("-------------- MLM Preprocessing INPUTS: --------------")
@@ -50,8 +50,10 @@ en_files = [str(x) for x in Path(data_path+'/en/').glob("*.csv")]
 es_files = [str(x) for x in Path(data_path+'/es/').glob("*.csv")]
 if language == "es":
     all_files = es_files
+    data_path_save=os.path.join(data_path_save, language)
 elif language == "en":
     all_files = en_files
+    data_path_save=os.path.join(data_path_save, language)
 else:
     all_files = en_files+es_files
 
@@ -120,6 +122,7 @@ train_dataset = train_dataset.rename_columns(
 print("Tonenization finished")
 #%%
 print("Saving processed dataset, , this will take a while...")
+Path(data_path_save).mkdir(parents=True, exist_ok=True) 
 train_dataset.save_to_disk(data_path_save)
 print("Processed finished!")
 # %%
