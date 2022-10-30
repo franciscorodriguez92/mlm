@@ -107,9 +107,15 @@ else:
 gold_standard = pd.read_table(test_path_labeled, sep="\t", dtype=str)
 gold_standard_merge = gold_standard.merge(df_pred)
 # %%
-if task==1:
-    print(classification_report(gold_standard_merge['task1'], gold_standard_merge['category'], digits=4))
-else:
-    print(classification_report(gold_standard_merge['task2'], gold_standard_merge['category'], digits=4))
+print("Spanish report::")
+gold_standard_merge_es = gold_standard_merge[gold_standard_merge['language']=='es']
+print(classification_report(gold_standard_merge_es['task' + str(task)], gold_standard_merge_es['category'], digits=4))
+
+print("English report::")
+gold_standard_merge_en = gold_standard_merge[gold_standard_merge['language']=='en']
+print(classification_report(gold_standard_merge_en['task' + str(task)], gold_standard_merge_en['category'], digits=4))
+
+print("Global report::")
+print(classification_report(gold_standard_merge['task' + str(task)], gold_standard_merge['category'], digits=4))
 
 # %%
