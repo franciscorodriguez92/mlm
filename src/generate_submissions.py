@@ -87,8 +87,17 @@ np.random.seed(args_seed)
 print("\nDevice: " + str(device) +"; Seed: "+str(args_seed))
 
 #%%
-df_pred = generate_submission(
-    model_path_save, basenet, device, test_path, output_path, task, batch_size, sample, language)    
+if language=='monolingual':
+    basenet_es = config["inference"]["basenet_tokenizer_es"]
+    model_path_save_es = config["inference"]["MODEL_PATH_SAVE_ES"]
+    df_pred_es = generate_submission(
+        model_path_save_es, basenet_es, device, test_path, output_path, task, batch_size, sample, language='es')    
+    df_pred_en = generate_submission(
+        model_path_save, basenet, device, test_path, output_path, task, batch_size, sample, language='en')    
+    df_pred = pd.concat([df_pred_es, df_pred_en])
+else:
+    df_pred = generate_submission(
+        model_path_save, basenet, device, test_path, output_path, task, batch_size, sample, language)    
 
 #%% Evaluation 
 if test_case == 'EXIST2021':
