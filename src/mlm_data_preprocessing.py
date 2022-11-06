@@ -5,6 +5,7 @@ import datasets
 from transformers import AutoTokenizer, DataCollatorForLanguageModeling
 import multiprocessing
 import json
+from utils.utils import whole_word_masking_data_collator
 #%% inputs
 """ disable_caching_dataset = True
 sample = 100
@@ -29,7 +30,7 @@ language = config["preprocessing"]["language"]
 mlm_probability = config["preprocessing"]["mlm_probability"]
 data_path = config["preprocessing"]["data_path"]
 data_path_save = config["preprocessing"]["data_processing_save"]
-
+whole_word_masking = config["preprocessing"]["whole_word_masking"]
 
 #%% 
 print("-------------- MLM Preprocessing INPUTS: --------------")
@@ -93,15 +94,30 @@ def tokenize_function(row):
         max_length=MAX_SEQ_LEN,
         return_special_tokens_mask=True)
 
-def insert_random_mask(batch):
+def tokenize_function_whole_word_masking(examples):
+    result = tokenizer(examples["text"], padding='max_length',
+        truncation=True,
+        max_length=MAX_SEQ_LEN,)
+    if tokenizer.is_fast:
+        result["word_ids"] = [result.word_ids(i) for i in range(len(result["input_ids"]))]
+    result["labels"]=result["input_ids"].copy()
+    return result
+
+def insert_random_mask(batch, whole_word_masking):
     features = [dict(zip(batch, t)) for t in zip(*batch.values())]
-    masked_inputs = data_collator(features)
+    if whole_word_masking:
+      masked_inputs = whole_word_masking_data_collator(features, mlm_probability, tokenizer)
+    else:
+      masked_inputs = data_collator(features)
     # Create a new "masked" column for each column in the dataset
     return {"masked_" + k: v.numpy() for k, v in masked_inputs.items()}
 
-def tokenize_and_mask(batch):
-    batch_tokenized = tokenize_function(batch)
-    return insert_random_mask(batch_tokenized)
+def tokenize_and_mask(batch, whole_word_masking):
+    if whole_word_masking:
+        batch_tokenized = tokenize_function_whole_word_masking(batch)
+    else:
+        batch_tokenized = tokenize_function(batch)
+    return insert_random_mask(batch_tokenized, whole_word_masking)
 
 #%%
 print("Tokenizing and masking raw data, this will take a while...")
@@ -110,6 +126,7 @@ train_dataset = unlabeled_data.map(
     batched=True,
     #num_proc=multiprocessing.cpu_count(),
     remove_columns=unlabeled_data['train'].column_names,
+    fn_kwargs={"whole_word_masking": whole_word_masking}
 )
 
 train_dataset = train_dataset.rename_columns(
