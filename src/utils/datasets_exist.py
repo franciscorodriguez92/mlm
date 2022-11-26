@@ -180,7 +180,10 @@ class exist_2021(torch.utils.data.Dataset):
 			df = df.append(metwo, ignore_index = True)
 
 		if sample:
-			df=df.sample(frac=0.01, random_state=123)
+			if sample is True:
+				df=df.sample(frac=0.01, random_state=123)
+			else:
+				df=df.sample(frac=sample, random_state=123)
 		
 		if text_cleaner:
 			preprocessor = TextCleaner(filter_users=True, filter_hashtags=True, 

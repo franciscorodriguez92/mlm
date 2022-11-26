@@ -55,7 +55,7 @@ train_loader = DataLoader(
 validation_loader = DataLoader(
     dataset=datasets_exist.exist_2021(
         config["fine_tuning"]["validation_dataset"], 
-    sample = config["fine_tuning"]["sample"], basenet = basenet_tokenizer, text_cleaner=False, language = language), 
+    sample = config["fine_tuning"]["sample_validation"], basenet = basenet_tokenizer, text_cleaner=False, language = language), 
     batch_size=TRAIN_BATCH_SIZE, shuffle=True)
 
 #%%
