@@ -7,6 +7,7 @@ from utils import datasets_exist, train_transformer
 from torch.utils.data import DataLoader
 from transformers import get_linear_schedule_with_warmup, get_constant_schedule_with_warmup, AdamW
 from pathlib import Path
+from utils.architectures import Transformer_lstm_model
 # %%
 """ TRAIN_BATCH_SIZE = 16
 LEARNING_RATE = 2e-5 
@@ -38,6 +39,8 @@ schedule=config["fine_tuning"]["schedule"]
 epochs=config["fine_tuning"]["EPOCHS"]
 model_path_save = config["fine_tuning"]["MODEL_PATH_SAVE"]
 language = config["fine_tuning"]["language"]
+cascade_task2 = config["fine_tuning"]["cascade_task2"]
+cascade_task1 = config["fine_tuning"]["cascade_task1"]
 Path(os.path.split(model_path_save)[0]).mkdir(parents=True, exist_ok=True) 
 
 #%% 
@@ -49,19 +52,23 @@ train_loader = DataLoader(
     dataset=datasets_exist.exist_2021(
         config["fine_tuning"]["train_dataset"], 
     sample = config["fine_tuning"]["sample"], basenet = basenet_tokenizer, 
-    concat_metwo=False, text_cleaner=False, balance_metwo=False, language = language), 
+    concat_metwo=False, text_cleaner=False, balance_metwo=False, language = language, cascade_task2=cascade_task2), 
     batch_size=TRAIN_BATCH_SIZE, shuffle=True)
 
 validation_loader = DataLoader(
     dataset=datasets_exist.exist_2021(
         config["fine_tuning"]["validation_dataset"], 
-    sample = config["fine_tuning"]["sample_validation"], basenet = basenet_tokenizer, text_cleaner=False, language = language), 
+    sample = config["fine_tuning"]["sample_validation"], basenet = basenet_tokenizer, text_cleaner=False, language = language, cascade_task2=cascade_task2), 
     batch_size=TRAIN_BATCH_SIZE, shuffle=True)
 
 #%%
-if task==1:
+if task==1 and cascade_task1:
+    model = Transformer_lstm_model(model_mlm, num_labels=2)
+elif task==2 and cascade_task2:
+    model = Transformer_lstm_model(model_mlm, num_labels=5, focal_loss=True)
+elif task==1:
     model = AutoModelForSequenceClassification.from_pretrained(model_mlm)
-else:
+elif task==2:
     model = AutoModelForSequenceClassification.from_pretrained(model_mlm, num_labels=6)
 
 #%%

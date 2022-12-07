@@ -108,17 +108,12 @@ class exist_2021(torch.utils.data.Dataset):
 	        : (for evaluation on the leaderboard)
 	'''
 
-	def __init__(self, filename, basenet= 'bert', max_length= 128, stop_words= False, is_test= False, language=False, sample=False, concat_metwo=False, text_cleaner=False, balance_metwo=False):
+	def __init__(self, filename, basenet= 'bert', max_length= 128, cascade_task2= False, is_test= False, language=False, sample=False, concat_metwo=False, text_cleaner=False, balance_metwo=False):
 		super(exist_2021, self).__init__()
 
 		self.is_test = is_test
 
-		if stop_words:
-			#self.nlp  = English()
-			#TODO: preprocesado
-			pass
-
-		self.data    = self.read_file(filename, stop_words, language, sample, concat_metwo, text_cleaner, balance_metwo)
+		self.data    = self.read_file(filename, cascade_task2, language, sample, concat_metwo, text_cleaner, balance_metwo)
 
 		if basenet == 'bert':
 			print("Tokenizer: bert-base-multilingual-cased\n")
@@ -144,9 +139,10 @@ class exist_2021(torch.utils.data.Dataset):
 		#self.segment_id = torch.tensor([1] * self.max_length).view(1, -1)
 
 		
-	def read_file(self, filename, stop_words, language, sample, concat_metwo, text_cleaner, balance_metwo):
+	def read_file(self, filename, cascade_task2, language, sample, concat_metwo, text_cleaner, balance_metwo):
 		#df = pd.read_table(filename, sep="\t", dtype={'id': 'str'})
 		df = pd.read_table(filename, sep="\t")
+
 		if language == "es":
 			df = df[df['language'] == "es"]
 		elif language == "en":
@@ -154,8 +150,11 @@ class exist_2021(torch.utils.data.Dataset):
 		
 		if not self.is_test:
 			df['task1']=df['task1'].map({'non-sexist' : 0, 'sexist': 1})
-			df['task2']=df['task2'].map({'non-sexist' : 0, 'ideological-inequality': 1, 'stereotyping-dominance': 2, 'objectification': 3, 'sexual-violence': 4, 'misogyny-non-sexual-violence': 5})
-			
+			df['task2']=df['task2'].map({'non-sexist' : 0, 'ideological-inequality': 1, 'stereotyping-dominance': 2, 
+				'objectification': 3, 'sexual-violence': 4, 'misogyny-non-sexual-violence': 5})
+		if cascade_task2:
+			df = df[df['task2'] != "non-sexist"]
+			df['task2']=df['task2']-1
 		if concat_metwo:
 			path = '../data/input/metwo/'
 			labels = pd.read_table(path + 'corpus_machismo_etiquetas.csv', sep=";", dtype={'status_id': 'str'})

@@ -69,6 +69,7 @@ sample = config["inference"]["sample"]
 task = config["inference"]["TASK"]
 test_case = config["inference"]["test_case"]
 language = config["inference"]["language"]
+cascade_system = config["inference"]["cascade_system"]
 Path(os.path.split(output_path)[0]).mkdir(parents=True, exist_ok=True) 
 #%% 
 print("-------------- MLM Preprocessing INPUTS: --------------")
@@ -87,7 +88,19 @@ np.random.seed(args_seed)
 print("\nDevice: " + str(device) +"; Seed: "+str(args_seed))
 
 #%%
-if language=='monolingual':
+if cascade_system and language=='monolingual':
+    basenet_es = config["inference"]["basenet_tokenizer_es"]
+    model_path_save_es = config["inference"]["MODEL_PATH_SAVE_ES"]
+    df_pred_task2 = generate_submission(
+        model_path_save_es, basenet_es, device, test_path, output_path, task, batch_size, sample)    
+    df_pred_task2.rename(columns={"category": "category_task2"}, inplace=True)
+    df_pred_task1 = generate_submission(
+        model_path_save, basenet, device, test_path, output_path, task, batch_size, sample)    
+    df_pred_task1.rename(columns={"category": "category_task1"}, inplace=True)
+    df_pred = pd.merge(df_pred_task1, df_pred_task2)
+    mask = (df_pred['category_task1'] == 'non-sexist')
+    df_pred['category_task2'][mask] = df_pred['category_task1']
+elif language=='monolingual':
     basenet_es = config["inference"]["basenet_tokenizer_es"]
     model_path_save_es = config["inference"]["MODEL_PATH_SAVE_ES"]
     df_pred_es = generate_submission(
@@ -107,15 +120,22 @@ else:
 gold_standard = pd.read_table(test_path_labeled, sep="\t", dtype=str)
 gold_standard_merge = gold_standard.merge(df_pred)
 # %%
-print("Spanish report::")
-gold_standard_merge_es = gold_standard_merge[gold_standard_merge['language']=='es']
-print(classification_report(gold_standard_merge_es['task' + str(task)], gold_standard_merge_es['category'], digits=4))
 
-print("English report::")
-gold_standard_merge_en = gold_standard_merge[gold_standard_merge['language']=='en']
-print(classification_report(gold_standard_merge_en['task' + str(task)], gold_standard_merge_en['category'], digits=4))
+if cascade_system and language=='monolingual':
+    print("Global report task1::")
+    print(classification_report(gold_standard_merge['task1'], gold_standard_merge['category_task1'], digits=4))
+    print("Global report task2::")
+    print(classification_report(gold_standard_merge['task2'], gold_standard_merge['category_task2'], digits=4))
+else:
+    print("Spanish report::")
+    gold_standard_merge_es = gold_standard_merge[gold_standard_merge['language']=='es']
+    print(classification_report(gold_standard_merge_es['task' + str(task)], gold_standard_merge_es['category'], digits=4))
 
-print("Global report::")
-print(classification_report(gold_standard_merge['task' + str(task)], gold_standard_merge['category'], digits=4))
+    print("English report::")
+    gold_standard_merge_en = gold_standard_merge[gold_standard_merge['language']=='en']
+    print(classification_report(gold_standard_merge_en['task' + str(task)], gold_standard_merge_en['category'], digits=4))
+
+    print("Global report::")
+    print(classification_report(gold_standard_merge['task' + str(task)], gold_standard_merge['category'], digits=4))
 
 # %%
