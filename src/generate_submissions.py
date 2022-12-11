@@ -92,10 +92,10 @@ if cascade_system and language=='monolingual':
     basenet_es = config["inference"]["basenet_tokenizer_es"]
     model_path_save_es = config["inference"]["MODEL_PATH_SAVE_ES"]
     df_pred_task2 = generate_submission(
-        model_path_save_es, basenet_es, device, test_path, output_path, task, batch_size, sample)    
+        model_path_save_es, basenet_es, device, test_path, output_path, 2, batch_size, sample)    
     df_pred_task2.rename(columns={"category": "category_task2"}, inplace=True)
     df_pred_task1 = generate_submission(
-        model_path_save, basenet, device, test_path, output_path, task, batch_size, sample)    
+        model_path_save, basenet, device, test_path, output_path, 1, batch_size, sample)    
     df_pred_task1.rename(columns={"category": "category_task1"}, inplace=True)
     df_pred = pd.merge(df_pred_task1, df_pred_task2)
     mask = (df_pred['category_task1'] == 'non-sexist')

@@ -153,7 +153,7 @@ class exist_2021(torch.utils.data.Dataset):
 			df['task2']=df['task2'].map({'non-sexist' : 0, 'ideological-inequality': 1, 'stereotyping-dominance': 2, 
 				'objectification': 3, 'sexual-violence': 4, 'misogyny-non-sexual-violence': 5})
 		if cascade_task2:
-			df = df[df['task2'] != "non-sexist"]
+			df = df[df['task2'] != 0]
 			df['task2']=df['task2']-1
 		if concat_metwo:
 			path = '../data/input/metwo/'
