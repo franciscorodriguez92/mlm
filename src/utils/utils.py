@@ -99,7 +99,7 @@ def get_result_test(model, dataloader, device, task):
         #print("TRUE_LABELS::::::: ", true_labels)
         #print("PREDICTIONS:::::: ", (predictions))
 
-def generate_submission(model_path, basenet, device, test_path=None, output_path=None, task=1, batch_size=2, sample=True, language=None):
+def generate_submission(model_path, basenet, device, test_path=None, output_path=None, task=1, batch_size=2, sample=True, language=None, cascade_system=False):
     dataset = datasets.exist_2021(test_path, sample = sample, basenet = basenet, is_test = True, language = language)
     test_data_loader = DataLoader(
         dataset=dataset,
@@ -125,6 +125,10 @@ def generate_submission(model_path, basenet, device, test_path=None, output_path
     df['predictions'] = predictions
     if task==1:
         df['category']=df['predictions'].map({ 0: 'non-sexist', 1: 'sexist'})
+        df=df[['id', 'test_case', 'category']]
+        df.to_csv(output_path, sep="\t", index=False)
+    elif task==2 and cascade_system:
+        df['category']=df['predictions'].map({0: 'ideological-inequality', 1: 'stereotyping-dominance', 2: 'objectification', 3: 'sexual-violence', 4: 'misogyny-non-sexual-violence'})
         df=df[['id', 'test_case', 'category']]
         df.to_csv(output_path, sep="\t", index=False)
     elif task==2:
