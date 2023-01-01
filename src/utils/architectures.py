@@ -64,7 +64,7 @@ class Transformer_lstm_model(torch.nn.Module):
               return (linear_output,)
 
 class transformer_sbert_lstm_model(torch.nn.Module):
-    def __init__(self, model_mlm, model_mlm2, num_labels=2, focal_loss=False):
+    def __init__(self, model_mlm, model_mlm2, num_labels=2, focal_loss=False, sbert_freeze=False):
           super(transformer_sbert_lstm_model, self).__init__()
           self.focal_loss = focal_loss
           self.num_labels = num_labels
@@ -77,6 +77,11 @@ class transformer_sbert_lstm_model(torch.nn.Module):
           #self.linear = torch.nn.Linear(256*2, self.num_labels)
           self.linear = torch.nn.Linear((256*2) + 768, (256*2))
           self.linear2 = torch.nn.Linear((256*2), self.num_labels)
+          if sbert_freeze:
+            print("Freezing encoder 2!")
+            for name, param in self.encoder.named_parameters():                
+                if param.requires_grad is not None:
+                    param.requires_grad = False
             
     def mean_pooling(self, model_output, attention_mask):
         token_embeddings = model_output[0] #First element of model_output contains all token embeddings
