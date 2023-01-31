@@ -1,10 +1,13 @@
 #%%
 from sentence_transformers import SentenceTransformer, losses, InputExample
-import os
+#import os
 from torch.utils.data import DataLoader
-import csv
+#import csv
 import math
 from datetime import datetime
+from sentence_transformers.evaluation import BinaryClassificationEvaluator
+from transformers.trainer_utils import set_seed
+set_seed(0)
 #%%
 # Read the dataset
 model_name = 'sentence-transformers/stsb-xlm-r-multilingual'
@@ -12,17 +15,27 @@ train_batch_size = 16
 num_epochs = 4
 #model_save_path = "models/sbert/"
 #model_save_path = os.path.join("../",model_save_path)
-sample=10
+sample=0.000001
 filename='../data/input/sbert/EXIST2021_training_split_cl.csv'
 model_save_path = '../models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
 # Load a pre-trained sentence transformer model
 model = SentenceTransformer(model_name)
 
 # Convert the dataset to a DataLoader ready for training
-print("Read STSbenchmark train dataset")
+print("Read train dataset")
 
 #%%
+import pandas as pd
+df = pd.read_csv(filename)
+df = df.reset_index()
+df = df.sample(frac=sample, random_state=123)
 train_samples = []
+for index, row in df.iterrows():
+    #print(row['c1'], row['c2'])
+    inp_example = InputExample(texts=[row['sentence_1'], row['sentence_2']], label=float(row['label']))
+    train_samples.append(inp_example)
+#%%
+""" train_samples = []
 with open(filename, 'r', encoding="utf8") as file:
   csvreader = csv.DictReader(file)
   for id, row in enumerate(csvreader):
@@ -31,7 +44,7 @@ with open(filename, 'r', encoding="utf8") as file:
     #print(id)
     inp_example = InputExample(texts=[row['sentence_1'], row['sentence_2']], label=float(row['label']))
     train_samples.append(inp_example)
-    if id>=sample: break
+    if id>=sample: break """
 
 
 #%%
@@ -53,12 +66,12 @@ for row in reader:
 
 train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=train_batch_size)
 #train_loss = losses.CosineSimilarityLoss(model=model)
-train_loss = losses.ContrastiveLoss(model=model)
+train_loss = losses.OnlineContrastiveLoss(model=model)
 
 
 # Development set: Measure correlation between cosine score and gold labels
 #print("Read STSbenchmark dev dataset")
-#evaluator = EmbeddingSimilarityEvaluator.from_input_examples(dev_samples, name='sts-dev')
+evaluator = BinaryClassificationEvaluator.from_input_examples(train_samples, name='sts-dev')
 
 
 # Configure the training. We skip evaluation in this example
@@ -68,9 +81,9 @@ print("Warmup-steps: {}".format(warmup_steps))
 
 # Train the model
 model.fit(train_objectives=[(train_dataloader, train_loss)],
-          #evaluator=evaluator,
+          evaluator=evaluator,
           epochs=num_epochs,
-          #evaluation_steps=1000,
+          evaluation_steps=2000,
           warmup_steps=warmup_steps,
           output_path=model_save_path)
 
