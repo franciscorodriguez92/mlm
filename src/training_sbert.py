@@ -12,12 +12,12 @@ set_seed(0)
 # Read the dataset
 model_name = 'sentence-transformers/stsb-xlm-r-multilingual'
 train_batch_size = 16
-num_epochs = 4
+num_epochs = 3
 #model_save_path = "models/sbert/"
 #model_save_path = os.path.join("../",model_save_path)
-sample=0.000001
-filename='../data/input/sbert/EXIST2021_training_split_cl.csv'
-model_save_path = '../models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
+sample=1
+filename='/data/frodriguez/data_mlm/input/sbert/EXIST2021_task1_preprocess_training_split_cl.csv'
+model_save_path = '/data/frodriguez/data_mlm/models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
 # Load a pre-trained sentence transformer model
 model = SentenceTransformer(model_name)
 
@@ -29,6 +29,7 @@ import pandas as pd
 df = pd.read_csv(filename)
 df = df.reset_index()
 df = df.sample(frac=sample, random_state=123)
+df = df.drop_duplicates(subset=['sentence_1'])
 train_samples = []
 for index, row in df.iterrows():
     #print(row['c1'], row['c2'])
@@ -87,6 +88,7 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
           warmup_steps=warmup_steps,
           output_path=model_save_path)
 
+print("Training finished!")
 # %%
 """ model_loaded = SentenceTransformer(model_save_path)
 sentences = ["This is an example sentence", "Each sentence is converted"]
