@@ -1,6 +1,6 @@
 #%%
 from sentence_transformers import SentenceTransformer, losses, InputExample
-#import os
+import os
 from torch.utils.data import DataLoader
 #import csv
 import math
@@ -13,12 +13,14 @@ set_seed(0)
 model_name = 'sentence-transformers/stsb-xlm-r-multilingual'
 train_batch_size = 16
 num_epochs = 3
-#model_save_path = "models/sbert/"
-#model_save_path = os.path.join("../",model_save_path)
-sample=1
-filename='/data/frodriguez/data_mlm/input/sbert/EXIST2021_task1_preprocess_training_split_cl.csv'
-model_save_path = '/data/frodriguez/data_mlm/models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
+sample=0.001
+model_save_path = "models/sbert/"
+model_save_path = os.path.join("../",model_save_path)
+filename='EXIST2021_training_split_cl_masked.csv'
+#filename='/data/frodriguez/data_mlm/input/sbert/EXIST2021_task1_preprocess_training_split_cl.csv'
+#model_save_path = '/data/frodriguez/data_mlm/models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
 # Load a pre-trained sentence transformer model
+masked = True
 model = SentenceTransformer(model_name)
 
 # Convert the dataset to a DataLoader ready for training
@@ -27,9 +29,11 @@ print("Read train dataset")
 #%%
 import pandas as pd
 df = pd.read_csv(filename)
-df = df.reset_index()
 df = df.sample(frac=sample, random_state=123)
-df = df.drop_duplicates(subset=['sentence_1'])
+if not masked:
+    df = df.reset_index()
+    df = df.sample(frac=1, random_state=123)
+    df = df.drop_duplicates(subset=['sentence_1'])
 train_samples = []
 for index, row in df.iterrows():
     #print(row['c1'], row['c2'])
