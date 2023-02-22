@@ -77,7 +77,8 @@ class TextCleaner(object):
         return unidecode.unidecode(text)
 
     def replace_user(self, text):
-        return re.sub( r"(?<=^|(?<=[^a-zA-Z0-9-\\.]))@([A-Za-z]+[A-Za-z0-9]+)", r"twuser", text)
+        #return re.sub( r"(?<=^|(?<=[^a-zA-Z0-9-\\.]))@([A-Za-z]+[A-Za-z0-9]+)", r"twuser", text)
+        return re.sub(r"\B@\w+", "twuser", text)
     
     def replace_hastags(self, text):
         return re.sub( r"(?<=^|(?<=[^a-zA-Z0-9-\\.]))#([A-Za-z]+[A-Za-z0-9]+)", r"twhastag", text)
