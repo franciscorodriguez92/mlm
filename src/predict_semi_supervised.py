@@ -15,24 +15,28 @@ config_file = open('config.json')
 config = json.load(config_file)
 #%%
 data_path = config["preprocessing"]["data_path"]
-basenet = config["inference"]["basenet_tokenizer"]
+#basenet = config["inference"]["basenet_tokenizer"]
+basenet = 'roberta'
 test_path = config["inference"]["test_path"]
-output_path = config["inference"]["output_path"]
 batch_size = config["inference"]["BATCH_SIZE"]
 sample = config["inference"]["sample"]
-model_path = config["inference"]["MODEL_PATH_SAVE"]
-language = config["inference"]["language"]
-threshold = 0.183
-model_path_task2=model_path
+#model_path = config["inference"]["MODEL_PATH_SAVE"]
+model_path = "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2021_whole_dataset_whole_word_mask_task1_cascade_system_sbert.pt"
+language = None
+threshold = 0.99
+model_path_task2= "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2021_whole_dataset_whole_word_mask_task2_cascade_system_sbert.pt"
 output_file = "semi_supervised_label.tsv"
+LOG_EVERY_N = 10000
+
 
 #%%
 en_files = [str(x) for x in Path(data_path+'/en/').glob("*.csv")]
 es_files = [str(x) for x in Path(data_path+'/es/').glob("*.csv")]
 #%%
 all_files = en_files+es_files
-all_files = en_files[:5]
+#all_files = en_files[:1]
 #%%
+print("Loading files...")
 li = []
 for filename in all_files:
     df = pd.read_csv(filename, dtype='str')
@@ -46,7 +50,7 @@ frame = frame[['status_id', 'text', 'lang']]
 frame.rename(columns={'status_id': 'id', 
                       'text': 'text',
                       'lang': 'language'}, inplace=True)
-frame = frame.sample(frac=0.0001, replace=True, random_state=1)
+#frame = frame.sample(frac=0.0001, replace=True, random_state=1)
 preprocessor = TextCleaner(filter_users=True, filter_hashtags=False, 
                filter_urls=True, convert_hastags=False, lowercase=False, 
                replace_exclamation=False, replace_interrogation=False, 
@@ -76,8 +80,12 @@ def load_model(model_path, device):
 def get_result_test(model, dataloader, device):
     model.eval()
     logits, true_labels, predictions, probas = [], [], [], []
+    i = 0
     with torch.no_grad():
       for batch in dataloader:
+          i=i+1
+          if (i % LOG_EVERY_N) == 0:
+            print("Batch number ", i)
           data = batch[0]
           b_input_ids = data[0].squeeze()
           b_input_mask = data[1].squeeze()  
@@ -114,26 +122,34 @@ test_data_loader = DataLoader(
         batch_size=batch_size)
 model=load_model(model_path, device)
 model_task2=load_model(model_path_task2, device)
+print("Making predictions task 1...")
 ids, predictions, probas = get_result_test(model, test_data_loader, device)
+print("Making predictions task2...")
 ids_task2, predictions_task2, probas_task2 = get_result_test(model_task2, test_data_loader, device)
 
 # %%
 frame['task1']=predictions
-frame['probas']=probas
-frame['task1']=frame['task1'].map({0: 'non-sexist', 1: 'ideological-inequality', 2: 'stereotyping-dominance', 3: 'objectification', 4: 'sexual-violence', 5: 'misogyny-non-sexual-violence'})
+frame['probas_task1']=probas
+frame['task1']=frame['task1'].map({0: 'non-sexist', 1:'sexist'})
 # %%
 frame['task2']=predictions_task2
 frame['probas_task2']=probas_task2
 frame['task2']=frame['task2'].map({0: 'non-sexist', 1: 'ideological-inequality', 2: 'stereotyping-dominance', 3: 'objectification', 4: 'sexual-violence', 5: 'misogyny-non-sexual-violence'})
 
 # %%
-output=frame[(frame['probas']>= threshold) & (frame['probas_task2']>= threshold) ]
+output=frame[frame['probas_task1']>= threshold]
+#output['task2_confidence'] = np.where((output['task1'] == 'sexist') & (output['probas_task2'] >= 0.6)
+#                     , 'confidence' , 'not-confidence')
+
 #%%
 output['test_case'] = 'semi-supervised'
 output['source'] = 'twitter'
-output = output[['test_case', 'id', 'source', 'language', 'text', 'task1', 'task2']]
+#output = output[['test_case', 'id', 'source', 'language', 'text', 'task1', 'task2']]
 #test_case	id	source	language	text	task1	task2
+output = output[['test_case', 'id', 'source', 'language', 'text', 'task1', 'task2', 'probas_task1', 'probas_task2']]
 
 # %%
+print("Writing output file...")
 output.to_csv(output_file, sep="\t", index=False)
 # %%
+print("Proces finished!")
