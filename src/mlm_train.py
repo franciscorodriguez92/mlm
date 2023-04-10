@@ -5,6 +5,8 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 from transformers import TrainingArguments, Trainer
 import json
 from pathlib import Path
+from transformers.trainer_utils import set_seed
+set_seed(123)
 #%%
 import torch, gc
 torch.cuda.empty_cache()
@@ -114,6 +116,7 @@ trainer = Trainer(
     tokenizer=tokenizer,
 )
 
+#trainer.train(resume_from_checkpoint=True)
 trainer.train()
 
 #%% 
