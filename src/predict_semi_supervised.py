@@ -21,11 +21,12 @@ test_path = config["inference"]["test_path"]
 batch_size = config["inference"]["BATCH_SIZE"]
 sample = config["inference"]["sample"]
 #model_path = config["inference"]["MODEL_PATH_SAVE"]
-model_path = "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2021_whole_dataset_whole_word_mask_task1_cascade_system_sbert.pt"
+#model_path = "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2021_whole_dataset_whole_word_mask_task1_cascade_system_v2.pt"
+model_path = "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2022_whole_dataset_whole_word_mask_task1_cascade_system.pt"
 language = None
 threshold = 0.99
-model_path_task2= "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2021_whole_dataset_whole_word_mask_task2_cascade_system_sbert.pt"
-output_file = "semi_supervised_label.tsv"
+model_path_task2= "/data/frodriguez/data_mlm/models/fine-tuned/xmlr_mlm_10_epochs_all_tweets_EXIST2022_whole_dataset_whole_word_mask_task2_cascade_system.pt"
+output_file = "/data/frodriguez/data_mlm/input/semi_supervised_label_exist2022_24022023"
 LOG_EVERY_N = 10000
 
 
@@ -51,11 +52,11 @@ frame.rename(columns={'status_id': 'id',
                       'text': 'text',
                       'lang': 'language'}, inplace=True)
 #frame = frame.sample(frac=0.0001, replace=True, random_state=1)
-preprocessor = TextCleaner(filter_users=True, filter_hashtags=False, 
-               filter_urls=True, convert_hastags=False, lowercase=False, 
-               replace_exclamation=False, replace_interrogation=False, 
-               remove_accents=False, remove_punctuation=False)
-frame['text'] = frame['text'].apply(lambda row: preprocessor(row))
+# preprocessor = TextCleaner(filter_users=True, filter_hashtags=False, 
+#                filter_urls=True, convert_hastags=False, lowercase=False, 
+#                replace_exclamation=False, replace_interrogation=False, 
+#                remove_accents=False, remove_punctuation=False)
+# frame['text'] = frame['text'].apply(lambda row: preprocessor(row))
 
 #%%
 #use_cuda = not args_cuda and torch.cuda.is_available()
@@ -124,17 +125,27 @@ model=load_model(model_path, device)
 model_task2=load_model(model_path_task2, device)
 print("Making predictions task 1...")
 ids, predictions, probas = get_result_test(model, test_data_loader, device)
-print("Making predictions task2...")
-ids_task2, predictions_task2, probas_task2 = get_result_test(model_task2, test_data_loader, device)
 
 # %%
 frame['task1']=predictions
 frame['probas_task1']=probas
 frame['task1']=frame['task1'].map({0: 'non-sexist', 1:'sexist'})
+frame=frame[frame['probas_task1']>= threshold]
+
+dataset.data=frame
+test_data_loader = DataLoader(
+        dataset=dataset,
+        #dataset=torch.utils.data.ConcatDataset([dataset, dataset]),
+        shuffle=False,
+        batch_size=batch_size)
+
+print("Making predictions task2...")
+ids_task2, predictions_task2, probas_task2 = get_result_test(model_task2, test_data_loader, device)
+
 # %%
 frame['task2']=predictions_task2
 frame['probas_task2']=probas_task2
-frame['task2']=frame['task2'].map({0: 'non-sexist', 1: 'ideological-inequality', 2: 'stereotyping-dominance', 3: 'objectification', 4: 'sexual-violence', 5: 'misogyny-non-sexual-violence'})
+frame['task2']=frame['task2'].map({0: 'ideological-inequality', 1: 'stereotyping-dominance', 2: 'objectification', 3: 'sexual-violence', 4: 'misogyny-non-sexual-violence'})
 
 # %%
 output=frame[frame['probas_task1']>= threshold]
@@ -150,6 +161,8 @@ output = output[['test_case', 'id', 'source', 'language', 'text', 'task1', 'task
 
 # %%
 print("Writing output file...")
-output.to_csv(output_file, sep="\t", index=False)
+output.to_csv(output_file+'.tsv', sep="\t", index=False)
+output.to_csv(output_file+'.csv', index=False)
+
 # %%
 print("Proces finished!")
