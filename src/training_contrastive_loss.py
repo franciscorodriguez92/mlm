@@ -175,6 +175,8 @@ def train_one_epoch(model, dataloader, optimizer, device, scheduler=None):
         b_input_ids = b_input_ids.to(device, dtype=torch.long)
         b_input_mask = b_input_mask.to(device, dtype=torch.long)
         b_labels = b_labels.to(device, dtype=torch.long)
+        b_input_ids2 = b_input_ids2.to(device, dtype=torch.long)
+        b_input_mask2 = b_input_mask2.to(device, dtype=torch.long)
         optimizer.zero_grad()
         loss = model(input_ids=b_input_ids, attention_mask=b_input_mask,input_ids2=b_input_ids2, attention_mask2=b_input_mask2,labels=b_labels)[0]
         #print(loss)
@@ -198,10 +200,10 @@ def train_one_epoch(model, dataloader, optimizer, device, scheduler=None):
 
 #%%
 TRAIN_BATCH_SIZE=16
-model_path = "models/sbert/sbert.pt"
-model_path = os.path.join("../",model_path)
+model_path = "/data/frodriguez/data_mlm/models/sbert/sbert_2.pt"
+#model_path = os.path.join("../",model_path)
 epochs=4
-filename="../data/input/sbert/EXIST2021_training_split_cl.csv"
+filename="/data/frodriguez/data_mlm/input/sbert/EXIST2021_training_split_cl.csv"
 encoder = 'sentence-transformers/stsb-xlm-r-multilingual'
 sample=0.000001
 lr=2e-5
@@ -222,7 +224,8 @@ scheduler = get_linear_schedule_with_warmup(
 for _ in trange(epochs, desc="Epoch"):
     train_one_epoch(model, dataset_loader, optimizer, device, scheduler=None)
     print(f"\n\nSaving model at {model_path}")
-    torch.save(model, model_path)
+    #torch.save(model, model_path)
+    torch.save(model.state_dict(), 'model_weights.pth')
 print("Training SBERT finished!")
 # %%
 """ from utils.utils import load_model

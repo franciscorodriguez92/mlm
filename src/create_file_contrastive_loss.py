@@ -3,10 +3,10 @@ import pandas as pd
 from itertools import combinations
 from utils.datasets_exist import TextCleaner
 # %%
-#filename = "/data/frodriguez/data_mlm/input/EXIST2021_dataset-test/EXIST2021_dataset/training/EXIST2021_training_split.tsv"
-filename = "../data/input/EXIST2021_dataset-test/EXIST2021_dataset/training/EXIST2021_training_split.tsv"
+filename = "/data/frodriguez/data_mlm/input/EXIST2021_dataset-test/EXIST2021_dataset/training/EXIST2021_training.tsv"
+#filename = "../data/input/EXIST2021_dataset-test/EXIST2021_dataset/training/EXIST2021_training_split.tsv"
 df_train = pd.read_table(filename, sep="\t")
-preprocessor = TextCleaner(filter_users=True, filter_hashtags=True, 
+preprocessor = TextCleaner(filter_users=True, filter_hashtags=False, 
                            filter_urls=True, convert_hastags=False, lowercase=False, 
                            replace_exclamation=False, replace_interrogation=False, 
                            remove_accents=False, remove_punctuation=False)
@@ -14,8 +14,8 @@ df_train['text'] = df_train['text'].apply(lambda row: preprocessor(row))
 print("Transforming the file...")
 
 # %%
-#mask_seeds = "/data/frodriguez/data_mlm/input/seed_terms.txt"
-mask_seeds = '../data/input/seed_terms.txt'
+mask_seeds = "/data/frodriguez/data_mlm/input/seed_terms.txt"
+#mask_seeds = '../data/input/seed_terms.txt'
 #mask_seeds = False
 if mask_seeds:
     seeds = pd.read_table(mask_seeds, sep="\t")
@@ -54,16 +54,17 @@ print("Creating df...")
 
 df_train_cl=pd.DataFrame.from_records(list_contrastive, columns=['sentence_1', 'sentence_2', 'label'])
 if mask_seeds:
+    df_train_cl = df_train_cl[df_train_cl['label']=='0']
     df_train_cl = df_train_cl.sample(frac=1, random_state=123)
     df_train_cl = df_train_cl.drop_duplicates(subset=['sentence_1'])
     df_train_cl_masked=pd.DataFrame.from_records(list_contrastive_masked, columns=['sentence_1', 'sentence_2', 'label'])
     df_train_cl = pd.concat([df_train_cl_masked, df_train_cl])
-    df_train_cl = df_train_cl.sample(frac=1, random_state=123)
+    #df_train_cl = df_train_cl.sample(frac=1, random_state=123)
 print("Storing the file...")
 # %%
 #df_train_cl = df_train_cl.rename(columns={'sentence_1': 'sentence_1', 'sentence_2': 'sentence_2', 'sentence_3': 'label'})
-df_train_cl.to_csv('EXIST2021_training_split_cl_masked.csv', index=False)
-#df_train_cl.to_csv('/data/frodriguez/data_mlm/input/sbert/EXIST2021_task1_preprocess_training_split_cl.csv', index=False)
+#df_train_cl.to_csv('EXIST2021_training_split_cl_masked.csv', index=False)
+df_train_cl.to_csv('/data/frodriguez/data_mlm/input/sbert/EXIST2021_training_split_cl_masked_task1_26022023.csv', index=False)
 # %%
 print("Finished!")
 

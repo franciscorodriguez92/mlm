@@ -13,12 +13,12 @@ set_seed(0)
 model_name = 'sentence-transformers/stsb-xlm-r-multilingual'
 train_batch_size = 16
 num_epochs = 3
-sample=0.001
+sample=1
 model_save_path = "models/sbert/"
-model_save_path = os.path.join("../",model_save_path)
-filename='EXIST2021_training_split_cl_masked.csv'
-#filename='/data/frodriguez/data_mlm/input/sbert/EXIST2021_task1_preprocess_training_split_cl.csv'
-#model_save_path = '/data/frodriguez/data_mlm/models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
+#model_save_path = os.path.join("../",model_save_path)
+#filename='EXIST2021_training_split_cl_masked_task1.csv'
+filename='/data/frodriguez/data_mlm/input/sbert/EXIST2021_training_split_cl_masked_task1_26022023.csv'
+model_save_path = '/data/frodriguez/data_mlm/models/sbert/'+model_name+'-'+datetime.now().strftime("%Y-%m-%d")
 # Load a pre-trained sentence transformer model
 masked = True
 model = SentenceTransformer(model_name)
