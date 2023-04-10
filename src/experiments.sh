@@ -1,3 +1,12 @@
+#####################################################
+#####################################################
+Prepare 4xGPUs instances:
+python3 -m venv venv_mlm
+source venv_mlm/bin/activate
+#pip3 install -r requirements.txt
+python3 -m pip install numpy pandas torch transformers datasets unidecode scikit-learn
+#####################################################
+#####################################################
 Prepare preprocessing instance:
 mkdir domain_adaption
 python3 -m venv env_data_processing
@@ -36,7 +45,7 @@ python3 -m venv env_mlm_training
 source env_mlm_training/bin/activate
 python3 -m pip install torch numpy pandas transformers datasets unidecode
 aws s3 cp s3://data-classification-system/src/mlm_train.py .
-aws s3 cp s3://data-classification-system/processed/ . --recursive 
+aws s3 cp s3://data-classification-system/processed/ . --recursive
 python3 mlm_train.py
 
 #!/bin/bash
@@ -93,6 +102,3 @@ gsutil cp ../submissions/submission_$exp1.tsv gs://exist2021/submissions
 rm ./experiments-logs/experiment_$exp1.log
 rm ./experiments-logs/submission_$exp1.log
 rm ../models/$exp1.pt
-
-
-
