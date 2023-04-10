@@ -154,8 +154,11 @@ class exist_2021(torch.utils.data.Dataset):
 			df['task2']=df['task2'].map({'non-sexist' : 0, 'ideological-inequality': 1, 'stereotyping-dominance': 2, 
 				'objectification': 3, 'sexual-violence': 4, 'misogyny-non-sexual-violence': 5})
 		if cascade_task2:
+			df = df[df['task1'] != 0]
 			df = df[df['task2'] != 0]
 			df['task2']=df['task2']-1
+			if 'probas_task2' in df.columns:
+				df = df[df['probas_task2'].astype(float) >= 0.5]
 		if concat_metwo:
 			path = '../data/input/metwo/'
 			labels = pd.read_table(path + 'corpus_machismo_etiquetas.csv', sep=";", dtype={'status_id': 'str'})
@@ -186,10 +189,10 @@ class exist_2021(torch.utils.data.Dataset):
 				df=df.sample(frac=sample, random_state=123)
 		
 		if text_cleaner:
-			preprocessor = TextCleaner(filter_users=True, filter_hashtags=True, 
-                           filter_urls=True, convert_hastags=True, lowercase=True, 
-                           replace_exclamation=True, replace_interrogation=True, 
-                           remove_accents=True, remove_punctuation=True)
+			preprocessor = TextCleaner(filter_users=True, filter_hashtags=False, 
+                           filter_urls=True, convert_hastags=False, lowercase=False, 
+                           replace_exclamation=False, replace_interrogation=False, 
+                           remove_accents=False, remove_punctuation=False)
 			df['text'] = df['text'].apply(lambda row: preprocessor(row))
 			
 

@@ -119,6 +119,7 @@ else:
     test_path_labeled = config["inference"]["gold_standard_exist_2022"]
 gold_standard = pd.read_table(test_path_labeled, sep="\t", dtype=str)
 gold_standard_merge = gold_standard.merge(df_pred)
+gold_standard_merge.to_csv(output_path, sep="\t", index=False)
 # %%
 
 if cascade_system and language=='monolingual':
@@ -126,6 +127,21 @@ if cascade_system and language=='monolingual':
     print(classification_report(gold_standard_merge['task1'], gold_standard_merge['category_task1'], digits=4))
     print("Global report task2::")
     print(classification_report(gold_standard_merge['task2'], gold_standard_merge['category_task2'], digits=4))
+elif language=='monolingual' and task==2:
+    print("Spanish report::")
+    gold_standard_merge_es = gold_standard_merge[gold_standard_merge['language']=='es']
+    print(classification_report(gold_standard_merge_es['task' + str(task)], gold_standard_merge_es['category'], digits=4))
+
+    print("English report::")
+    gold_standard_merge_en = gold_standard_merge[gold_standard_merge['language']=='en']
+    print(classification_report(gold_standard_merge_en['task' + str(task)], gold_standard_merge_en['category'], digits=4))
+
+    print("Global report::")
+    print(classification_report(gold_standard_merge['task' + str(task)], gold_standard_merge['category'], digits=4))
+    print("Global report task 1::")
+    gold_standard_merge['category']=gold_standard_merge['category'].map({'non-sexist':'non-sexist','ideological-inequality': 'sexist', 'stereotyping-dominance': 'sexist', 'objectification': 'sexist', 'sexual-violence': 'sexist', 'misogyny-non-sexual-violence': 'sexist'})
+    print(classification_report(gold_standard_merge['task1'], gold_standard_merge['category'], digits=4))
+
 else:
     print("Spanish report::")
     gold_standard_merge_es = gold_standard_merge[gold_standard_merge['language']=='es']

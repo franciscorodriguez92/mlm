@@ -100,7 +100,7 @@ def get_result_test(model, dataloader, device, task):
         #print("PREDICTIONS:::::: ", (predictions))
 
 def generate_submission(model_path, basenet, device, test_path=None, output_path=None, task=1, batch_size=2, sample=True, language=None, cascade_system=False):
-    dataset = datasets.exist_2021(test_path, sample = sample, basenet = basenet, is_test = True, language = language)
+    dataset = datasets.exist_2021(test_path, sample = sample, basenet = basenet, is_test = True, language = language, text_cleaner=True)
     test_data_loader = DataLoader(
         dataset=dataset,
         shuffle=False,

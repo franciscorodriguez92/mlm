@@ -61,12 +61,14 @@ def evaluate(model, dataloader, device, task):
           # with torch.no_grad():
           #     logits = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)[0]
           if task != 'multitask':
-              loss = model(input_ids=b_input_ids, token_type_ids=None, attention_mask=b_input_mask,labels=b_labels[:,task])[0]
+              #loss = model(input_ids=b_input_ids, token_type_ids=None, attention_mask=b_input_mask,labels=b_labels[:,task])[0]
+              loss = 0 
               logits = model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)[0]
           else:
               loss = model(input_id=b_input_ids, token_type_id=None, mask_id=b_input_mask,labels=b_labels)
               logits_task1, logits_task2 = model(input_id=b_input_ids, token_type_id=None, mask_id=b_input_mask)
-          test_loss += loss.item()
+          #test_loss += loss.item()
+          test_loss += loss
           nb_test_steps += 1
           if task != "multitask":
             logits = logits.detach().cpu().numpy()
@@ -125,6 +127,7 @@ def train(model, optimizer,
     if task != 'multitask':
         task = 0 if task==1 else 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     epochs_without_improvement =0
     best_metrics = None
     def improves_performance(best_metrics, metrics):
